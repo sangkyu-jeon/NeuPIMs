@@ -7,7 +7,15 @@
 #include "Dram.h"
 #include "SimulationConfig.h"
 #include "Sram.h"
+
 #include "Stat.h"
+
+// -------------------------
+// Base processing core used throughout the simulator.
+// Tracks pipelines, scratchpads and statistics about
+// compute and memory behaviour. Derived classes
+// implement architecture specific logic.
+// -------------------------
 
 class Core {
    public:
@@ -35,7 +43,11 @@ class Core {
     virtual void print_stats();
     virtual cycle_type get_compute_cycles() { return _stat_compute_cycle; }
 
-   protected:
+protected:
+    // Internal state tracked by every core.
+    // _core_cycle indicates the current simulation cycle.
+    // Statistics such as _stat_compute_cycle accumulate
+    // the time spent in different states for performance analysis.
     virtual bool can_issue_compute(Instruction &inst);
     virtual cycle_type get_inst_compute_cycles(Instruction &inst) = 0;
 
@@ -75,20 +87,26 @@ class Core {
     std::deque<std::shared_ptr<Tile>> _tiles;
     std::queue<std::shared_ptr<Tile>> _finished_tiles;
 
+    // Queues that emulate pipeline stages. Instructions
+    // move through compute and vector pipelines until
+    // their finish_cycle is reached.
     std::queue<Instruction> _compute_pipeline;
-    std::queue<Instruction> _vector_pipeline;
-    std::vector<std::queue<Instruction>> _vector_pipelines;
+    std::queue<Instruction> _vector_pipeline;            // legacy single pipe
+    std::vector<std::queue<Instruction>> _vector_pipelines;  // one per vector lane
 
     std::queue<Instruction> _ld_inst_queue;
     std::queue<Instruction> _st_inst_queue;
     std::list<Instruction> _ex_inst_queue;
 
-    // make it to vector
+    // Memory request queues per DRAM channel. Requests are
+    // generated from instructions and later popped by the
+    // memory system model.
     std::vector<std::queue<MemoryAccess *>> _memory_request_queues;
     std::queue<MemoryAccess *> _memory_request_queue;
     std::queue<MemoryAccess *> _memory_response_queue;
     uint32_t _waiting_write_reqs;
 
+    // Double-buffered scratchpads for normal and accumulation data.
     int _current_spad;
     int _current_acc_spad;
     Sram _spad;
