@@ -38,3 +38,21 @@ Verification Steps
 2. Monitor the log for messages about instruction issue counts.
 3. Validate that output tensors match expected results for small workloads.
 4. Compare timing results with academic references on systolic array performance, e.g., weights-stationary architectures described in [Google TPU](https://arxiv.org/abs/1704.04760).
+
+Detailed Variables
+------------------
+- `_compute_pipeline` : stores GEMM instructions while they execute on the
+  systolic array. An entry is removed when `finish_cycle` is reached.
+- `_vector_pipelines` : an array of queues, one per vector lane, used for
+  element-wise operations such as LayerNorm.
+- `_ld_inst_queue` / `_st_inst_queue` : queues of pending load and store
+  instructions translated into memory accesses.
+- `_stat_layernorm_cycle`, `_stat_softmax_cycle`, etc.: per-operation counters
+  incremented when a vector instruction is active.
+
+Code Patterns
+-------------
+Look for `std::weak_ptr<Tile>` in `Instruction` structures. The core locks this
+pointer only when necessary to avoid reference cycles. Pipeline queues hold
+`Instruction` objects by value, but they store `Tile` pointers indirectly.
+

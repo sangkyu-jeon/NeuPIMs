@@ -35,3 +35,20 @@ Verification Procedure
 2. Run with a small configuration file (e.g., `configs/systolic_ws_128x128_dev.json`).
 3. Check debug output from `spdlog` to confirm pipeline stages behave as expected.
 4. Compare results with known behaviour of similar NPU simulators like [ONNXim](https://github.com/PSAL-POSTECH/ONNXim).
+
+Additional Modules
+------------------
+- **Sram** (`src/Sram.h`/`src/Sram.cc`): models on-chip scratchpad memories.
+  - `_cache_table` : associative map tracking allocated entries per buffer.
+  - `reserve()` and `fill()` update validity bits when memory requests load data.
+- **Dram** (`src/Dram.h`/`src/Dram.cc`): abstract base for DRAM models.
+  - `PIM` subclass integrates NewtonSim for in-memory operations.
+  - `get_channel_id()` maps a `MemoryAccess` to a memory channel.
+- **Interconnect** (`src/Interconnect.h`/`src/Interconnect.cc`): routes memory
+  requests between cores and DRAM.
+  - `SimpleInterconnect` provides a latency-based model using per-channel queues.
+  - `Booksim2Interconnect` hooks into the BookSim2 network simulator.
+
+See the individual documentation files `sram.txt`, `dram.txt`, and
+`interconnect.txt` for more details on these components.
+

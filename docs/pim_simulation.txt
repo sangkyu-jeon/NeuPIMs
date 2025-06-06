@@ -29,3 +29,18 @@ Verification Procedure
 1. Compile NewtonSim by running its `brun.sh` or `cmake` instructions in `extern/NewtonSim/README.md`.
 2. Run unit tests or provided examples to confirm PIM commands execute with correct timing.
 3. Compare cycle counts to published DRAMsim3 PIM extensions such as the [Newton architecture paper](https://ieeexplore.ieee.org/document/8356245).
+
+Variable Notes
+--------------
+- `LOGGING_CONFIG::PIMSIM_LOGGING` toggles verbose printing of PIM commands.
+- `LOGGING_CONFIG::TROUBLE_ADDR` and `TROUBLE_CHANNEL` filter debug output to a
+  specific address and channel.
+- Within `NewtonSim`, `response_queues_*` store completed requests separated by
+  request type (read, write, PIM).
+
+Complex Syntax Details
+----------------------
+`NewtonSim::ResponseQueue` implements a ring buffer: `reserve()` increments
+`NumReserved` while `push()` and `pop()` update the underlying vector
+`OutputQueue`.
+

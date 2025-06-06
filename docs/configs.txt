@@ -34,3 +34,14 @@ Verification
 1. Ensure JSON files are valid by running `jq` or a similar tool.
 2. Cross-check parameter values with the README explanations in `configs/README.md`.
 3. Modify small values (e.g., `max_batch_size`) and confirm the simulator reflects changes in log output.
+
+SimulationConfig Fields
+----------------------
+The `SimulationConfig` struct in `src/SimulationConfig.h` aggregates all options
+from the YAML/JSON files. Key fields include:
+- `num_cores` : number of processing cores instantiated.
+- `vector_core_count` / `vector_core_width` : dimensions of the vector unit.
+- `pim_config_path` : path to a NewtonSim `.ini` file describing DRAM timings.
+- `icnt_type` and `icnt_config_path` : interconnect model and optional BookSim2
+  configuration file.
+
