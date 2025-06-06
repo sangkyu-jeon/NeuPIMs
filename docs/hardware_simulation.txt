@@ -1,0 +1,37 @@
+Hardware Simulation Modules
+===========================
+
+This document describes the modules that emulate hardware behaviour in the NeuPIMs simulator.
+
+Core Overview
+-------------
+- `src/Core.h` and `src/Core.cc` define the basic interface for a processing core.
+- Each core handles instructions and interacts with SRAM scratchpads.
+- Variables such as `_core_cycle` track the current simulated cycle.
+- Functions like `cycle()` step the core through time.
+
+Key Variables
+-------------
+- `_compute_pipeline` : queue holding instructions that are being executed.
+- `_ld_inst_queue` : queue for load instructions awaiting issue.
+- `_acc_spad` and `_spad` : scratchpad SRAM models storing activation data.
+- `finish_cycle` in each instruction indicates when an operation completes.
+
+Complex Syntax
+--------------
+- The code uses C++ `std::queue` and `std::vector` containers to manage pipelines.
+- Weak pointers (`std::weak_ptr`) link instructions to parent tiles without owning them, avoiding circular references.
+- Macros such as `ast()` wrap assertions for readability.
+
+Module Description
+------------------
+- The `Core` class is subclassed by specific core implementations such as `SystolicWS` for weight-stationary systolic arrays.
+- Each cycle, the core checks pipelines, issues memory requests and updates scratchpads.
+- See `src/SystolicWS.cc` for an example core that manages vector operations and accumulation.
+
+Verification Procedure
+----------------------
+1. Build the simulator using the steps in `README.md`.
+2. Run with a small configuration file (e.g., `configs/systolic_ws_128x128_dev.json`).
+3. Check debug output from `spdlog` to confirm pipeline stages behave as expected.
+4. Compare results with known behaviour of similar NPU simulators like [ONNXim](https://github.com/PSAL-POSTECH/ONNXim).

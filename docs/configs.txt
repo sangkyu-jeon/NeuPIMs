@@ -1,0 +1,36 @@
+Configuration Files
+==================
+
+Hardware Config (`systolic_ws_128x128_dev.json`)
+------------------------------------------------
+Defines the NPU core dimensions and pipeline latencies.
+- `core_width`, `core_height`: size of the systolic array.
+- `sram_size`, `spad_size`: scratchpad capacities in bytes.
+- `vector_core_count`: number of vector units.
+- `icnt_type`, `icnt_freq`: interconnect model and clock frequency.
+
+Memory Config (`neupims.json`)
+------------------------------
+Specifies memory system parameters for NeuPIMs.
+- `dram_type`: choose between standard DRAM or PIM-enabled variants.
+- `pim_config_path`: hardware description for NewtonSim.
+- `dram_channels`: number of HBM channels.
+- `dram_req_size`: alignment for memory accesses (in bytes).
+
+System Configs (`sub-batch-on.json`, `sub-batch-off.json`)
+---------------------------------------------------------
+Control runtime behaviour.
+- `run_mode`: `npu` or `npu+pim` determines if PIM is enabled.
+- `sub_batch_mode`: toggles sub-batch interleaving for large batches.
+- `max_batch_size`: limit on simultaneous queries.
+
+Model Configs
+-------------
+Contain high-level model parameters like number of layers and embedding size.
+They are referenced by the simulator when launching a model.
+
+Verification
+------------
+1. Ensure JSON files are valid by running `jq` or a similar tool.
+2. Cross-check parameter values with the README explanations in `configs/README.md`.
+3. Modify small values (e.g., `max_batch_size`) and confirm the simulator reflects changes in log output.

@@ -1,0 +1,40 @@
+NPU Systolic Array Simulation
+============================
+
+Files
+-----
+- `src/SystolicWS.h` / `src/SystolicWS.cc` define a weight-stationary systolic array core.
+- `src/NeuPIMSystolicWS.h` / `src/NeuPIMSystolicWS.cc` integrate PIM features with the systolic array.
+- Configuration is provided in `configs/systolic_ws_128x128_dev.json`.
+
+Important Variables
+-------------------
+- `vector_core_count`, `vector_core_width`: specify the number and width of vector lanes.
+- `systolic_array_count`: number of systolic arrays instantiated.
+- `_vector_pipelines`: list of pipelines for vector operations.
+- `_stat_systolic_inst_issue_count`: tracks issued instructions for statistics.
+
+Complex Syntax Notes
+--------------------
+- The code uses `std::queue` for pipelines and iterates each cycle.
+- `auto tile = inst.parent_tile.lock();` converts a weak pointer to a shared pointer safely.
+- Memory requests are generated via `MemoryAccess::from_instruction`.
+
+Functionality
+-------------
+- On each cycle, the core checks whether a compute or vector operation finishes.
+- Load instructions are translated to memory requests that interact with the memory system.
+- The systolic array processes tiles of data and accumulates results in scratchpads.
+
+YAML/JSON Config
+----------------
+- `core_width` and `core_height` define the shape of each array (e.g., 128x128).
+- Latency parameters such as `add_latency` and `mul_latency` configure individual operation delays.
+- `icnt_type` and related parameters define the interconnect model between cores.
+
+Verification Steps
+------------------
+1. Use the provided config file and run `./brun.sh` to launch a simulation.
+2. Monitor the log for messages about instruction issue counts.
+3. Validate that output tensors match expected results for small workloads.
+4. Compare timing results with academic references on systolic array performance, e.g., weights-stationary architectures described in [Google TPU](https://arxiv.org/abs/1704.04760).
