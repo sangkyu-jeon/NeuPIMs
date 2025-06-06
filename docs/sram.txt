@@ -1,0 +1,29 @@
+Scratchpad SRAM
+===============
+
+The `Sram` class in `src/Sram.h` models a small scratchpad memory used by each
+core. It exposes helper functions to reserve space for incoming data and to mark
+entries valid once the data arrives.
+
+Important Fields
+----------------
+- `_cache_table[2]` : per-buffer hash tables storing `SramEntry` records.
+  Each `SramEntry` contains `valid`, `address`, `size`, `remain_req_count` and a
+  timestamp used for LRU policies.
+- `_current_size[2]` : current allocation size for each buffer.
+- `_accum` : whether this scratchpad is used for accumulation buffers.
+
+Function Highlights
+-------------------
+- `reserve(addr, id, size, count)` allocates a new entry when a load request is
+  issued. It increments `_current_size[id]` and populates `_cache_table`.
+- `fill(addr, id)` decrements `remain_req_count` and sets `valid` when all
+  fragments for the address have arrived.
+- `count_up(addr, id)` increases `remain_req_count` when a computation writes
+  partial results back to the same location.
+
+Verification
+------------
+Check that `check_hit()` returns `true` only after all expected fragments are
+received. Use `print_all()` or `print_non_valid()` to debug allocation state.
+

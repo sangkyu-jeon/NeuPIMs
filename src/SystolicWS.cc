@@ -1,9 +1,16 @@
 #include "SystolicWS.h"
 
+// Implements cycle-by-cycle behaviour of the weight-stationary
+// systolic array core. Instructions are moved through pipelines
+// and translated into memory accesses or scratchpad updates.
+
 SystolicWS::SystolicWS(uint32_t id, SimulationConfig config) : Core(id, config) {}
 
 void SystolicWS::cycle() {
     /* Compute unit */
+    // Instructions stay in the compute pipeline until their
+    // finish_cycle becomes <= current cycle. Once complete we
+    // write the result to the accumulation scratchpad.
     // todo: matrix_unit.cycle();
     if (!_compute_pipeline.empty() && _compute_pipeline.front().finish_cycle <= _core_cycle) {
         Instruction &inst = _compute_pipeline.front();
@@ -33,7 +40,8 @@ void SystolicWS::cycle() {
                 remaining_computes --;
             pop target data
     */
-    // vector pipeline needs iterating vectors
+    // Vector pipelines process element-wise operations. Each
+    // vector lane holds its own queue of instructions.
     // todo: vector_unit.cycle();
     for (auto &vector_pipeline : _vector_pipelines) {
         if (!vector_pipeline.empty() && vector_pipeline.front().finish_cycle <= _core_cycle) {
@@ -54,6 +62,9 @@ void SystolicWS::cycle() {
     }
 
     /* LD instruction queue */
+    // Memory load instructions are translated into multiple
+    // MemoryAccess objects that are later consumed by the
+    // DRAM model.
     // todo: ld_queue.cycle();
     if (!_ld_inst_queue.empty()) {
         Instruction &front = _ld_inst_queue.front();
@@ -119,6 +130,8 @@ void SystolicWS::cycle() {
     }
 
     /* ST instruction queue */
+    // Store instructions remove data from the scratchpad and
+    // enqueue write requests for memory.
     // todo: st_queue.cycle();
     if (!_st_inst_queue.empty()) {
         Instruction &front = _st_inst_queue.front();

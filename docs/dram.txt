@@ -1,0 +1,27 @@
+DRAM and PIM Backend
+====================
+
+`src/Dram.h` defines an abstract interface for DRAM models. The `PIM` subclass
+extends it with NewtonSim support to execute in-memory computations.
+
+Key Variables
+-------------
+- `_n_ch` : number of memory channels.
+- `_addr_align` : alignment requirement for requests, derived from
+  `SimulationConfig::dram_req_size`.
+- `_total_processed_requests` : per-channel statistics for bandwidth utilisation.
+- `_burst_cycle` : channel burst timing, used to compute average BW.
+
+Functions
+---------
+- `MakeAddress()` converts channel/bank/row/col fields to a physical address.
+- `EncodePIMHeader()` forms special commands that trigger PIM operations.
+- `get_avg_bw_util()` returns the average bandwidth usage observed so far.
+- `get_avg_pim_cycle()` exposes the cycle count spent processing PIM commands.
+
+Verification
+------------
+Compare the statistics printed by `print_stat()` with the values reported by the
+underlying NewtonSim logs. Ensure that `reset_pim_cycle()` zeroes the counters
+between runs.
+
