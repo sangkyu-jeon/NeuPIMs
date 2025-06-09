@@ -25,7 +25,6 @@ Compare the statistics printed by `print_stat()` with the values reported by the
 underlying NewtonSim logs. Ensure that `reset_pim_cycle()` zeroes the counters
 between runs.
 
-
 Implementation Details
 ---------------------
 The constructor of `PIM` allocates per-channel statistics vectors and
@@ -67,3 +66,4 @@ Reference: the NewtonSim project at
 https://github.com/PSAL-POSTECH/ONNXim provides similar DRAM timing
 validation.
 
+=======
