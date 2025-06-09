@@ -1,0 +1,52 @@
+DRAMSim3 Integration and Timing Model
+====================================
+
+This repository bundles the NewtonSim library (see `extern/NewtonSim`), which is built on top of DRAMsim3.  NewtonSim extends the original timing model with PIM commands while exposing the same CPU-facing interface.
+
+CPU Host Models
+---------------
+Three simple CPU drivers are implemented in `cpu.h` and `cpu.cc`.  They generate memory transactions that stress the DRAM controller:
+
+- **RandomCPU** issues random addresses at full speed.
+- **StreamCPU** performs a streaming add pattern on three arrays.
+- **TraceBasedCPU** replays a pre-recorded trace file.
+
+Each CPU keeps an internal `MemorySystem` instance and calls `ClockTick()` once per cycle.  The constructor binds callbacks for completed reads and writes:
+
+```cpp
+CPU(const std::string &config_file, const std::string &output_dir)
+    : memory_system_(config_file, output_dir,
+                     std::bind(&CPU::ReadCallBack, this, std::placeholders::_1),
+                     std::bind(&CPU::WriteCallBack, this, std::placeholders::_1)),
+      clk_(0) {}
+```
+
+This snippet shows how every CPU model creates a DRAMSim3 `MemorySystem` and advances simulation time.  The complete declaration can be seen in lines 14–32 of `extern/NewtonSim/src/cpu.h`.
+
+DRAM Timing Configuration
+-------------------------
+The timing parameters are parsed from an INI file by the `Config` class (`extern/NewtonSim/src/configuration.h`).  Important fields include `tRCD`, `tFAW`, `tWR`, and many others.  The configuration object also computes derived values such as `burst_cycle` and `request_size_bytes`.
+
+During construction the controller receives a `Timing` object which stores per-command dependency tables.  The data members in `timing.h` hold vectors indexed by DRAM command type:
+
+```cpp
+class Timing {
+  public:
+    Timing(const Config &config);
+    std::vector<std::vector<std::pair<CommandType, int>>> same_bank;
+    std::vector<std::vector<std::pair<CommandType, int>>> other_banks_same_bankgroup;
+    std::vector<std::vector<std::pair<CommandType, int>>> other_bankgroups_same_rank;
+    std::vector<std::vector<std::pair<CommandType, int>>> other_ranks;
+    std::vector<std::vector<std::pair<CommandType, int>>> same_rank;
+};
+```
+
+These tables encode delays such as `tRRD` (row‑to‑row activation) or `tCCD` (column‑to‑column) depending on where the next command targets.  The memory controller consults them every cycle to check whether a queued command may issue.
+
+Example Timing Scenario
+----------------------
+Consider a sequence issuing an ACTIVATE followed by a READ to the same bank.  The controller will enforce at least `tRCD` cycles between them.  If another ACTIVATE goes to a different bank within the same bank group, the `tRRD_S` parameter applies.  When four ACT commands occur within a short window, `tFAW` ensures a minimum spacing regardless of bank targets.  These values come directly from the INI file and are stored in the `Config` object for lookup by the controller and command queue.
+
+Verification
+------------
+To validate DRAM timing behaviour, NewtonSim can emit a command trace when built with `CMD_TRACE=1`.  This trace may be fed into Micron's Verilog models as described in the original DRAMsim3 README.  Comparing the resulting waveform with DRAMsim3 statistics confirms that the simulator respects all timing constraints.
