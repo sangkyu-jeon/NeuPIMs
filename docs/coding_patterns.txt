@@ -1,0 +1,42 @@
+Coding Patterns in NeuPIMs
+==========================
+
+This document summarises common C++ constructs used across the simulator source.
+
+Shared Pointer Aliases
+----------------------
+`src/Common.h` defines a template alias `Ptr<T>` as a shorthand for `std::shared_ptr<T>`.  Many objects store parents via `std::weak_ptr` to avoid reference cycles.  For example each `Instruction` keeps `std::weak_ptr<Tile> parent_tile` so the tile can be freed once all instructions finish.
+
+Enumerations and String Helpers
+-------------------------------
+Enumerations such as `Opcode`, `MemoryAccessType` and `StagePlatform` are declared in `Common.h`.  Helper functions convert these values to strings for logging.  `Instruction` and `Tile` structures rely on these enums to mark operation types and execution stages.
+
+Address Macros
+--------------
+Several constants are defined in `Common.h`:
+
+```cpp
+#define SPAD_BASE 0x10000000
+#define ACCUM_SPAD_BASE 0x20000000
+#define GARBAGE_ADDR 0xFFFFFFFFFFFFFFF
+```
+
+They provide fixed address bases for scratchpad memories and sentinel values.  Many components refer to them when calculating buffer addresses.
+
+Singleton Template
+------------------
+The file `AddressAllocator.h` demonstrates a simple `Singleton` template which exposes a static `GetInstance()` method.  Weight and activation allocators derive from this template so a single global allocator can be accessed throughout the program.
+
+Variadic Utility Functions
+--------------------------
+`name_gen()` in `Common.h` uses a variadic template to join multiple strings with dots.  This pattern appears in several debugging helpers and keeps string concatenation concise.
+
+Unique Pointers and RAII
+------------------------
+Dynamic subsystems such as the PIM DRAM model own resources via `std::unique_ptr`.  For instance `PIM::PIM` stores a `std::unique_ptr<dramsim3::NewtonSim>` to manage the lifetime of the underlying memory system.  This avoids manual deletion and conveys ownership explicitly.
+
+Queuing with STL Containers
+---------------------------
+Execution pipelines and memory request buffers are implemented with `std::queue` and `std::deque`.  The same pattern appears in the systolic core (`_compute_pipeline`, `_vector_pipelines`) and in the interconnect and memory controllers.
+
+By following these patterns—pointer aliases, enum helpers, RAII with smart pointers and standard containers—the code base maintains a consistent style that is applied across all modules.

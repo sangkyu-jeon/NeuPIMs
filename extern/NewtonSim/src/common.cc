@@ -1,5 +1,9 @@
 #include "common.h"
 
+// Utility helpers and logging functions for NewtonSim.
+// This file extends DRAMsim3 with support for PIM commands
+// and colourful debug output.
+
 #include <sys/stat.h>
 
 #include <sstream>
@@ -10,11 +14,15 @@
 namespace dramsim3 {
 
 namespace LOGGING_CONFIG {
+// Flags used to control verbosity of PIM command tracing.
 bool STATUS_CHECK = false;
+// Address and channel to focus debug output on.
 uint32_t TROUBLE_ADDR = 816834560;  // for logging only specific addr
 uint32_t TROUBLE_CHANNEL = 0;       // for logging only specific channel
+// Enable verbose logging of PIM commands.
 bool PIMSIM_LOGGING = false;
 bool PIMSIM_LOGGING_DEBUG = false;
+// If true only events related to TROUBLE_* are printed.
 bool LOGGING_ONLY_TROUBLE_ZONE = true;
 }  // namespace LOGGING_CONFIG
 

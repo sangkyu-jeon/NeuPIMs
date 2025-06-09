@@ -1,0 +1,28 @@
+Interconnect Models
+===================
+
+The simulator can use different interconnect models to transfer requests between
+cores and the DRAM backend.
+
+Classes
+-------
+- `Interconnect` (abstract): base interface found in `src/Interconnect.h`.
+  Provides `push()`, `pop()`, and per-channel request queues.
+- `SimpleInterconnect`: latency-based, per-destination queues. Uses round robin
+  scheduling via `_mem_sa_q_turn` and tracks busy nodes with `_busy_node`.
+- `Booksim2Interconnect`: wraps the BookSim2 network simulator for detailed
+  network contention modelling. Configured through a BookSim2 YAML file.
+
+Important Members
+-----------------
+- `_n_nodes` : number of end points (cores + memory controllers).
+- `_mem_req_queue1`/`_mem_req_queue2` : double-buffered request queues used when
+  modelling separate read and write paths.
+- `_mem_cycle_interval` : granularity for merging statistics in `_stats`.
+
+Verification
+------------
+Use a small workload and compare `get_core_cycle()` output with the expected
+latency given in the configuration. When using BookSim2, verify that the network
+utilisation matches the BookSim2 logs.
+

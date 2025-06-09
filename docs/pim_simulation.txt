@@ -1,0 +1,46 @@
+PIM Simulation
+==============
+
+Modules
+-------
+- PIM behaviour is implemented in `extern/NewtonSim`, built on top of DRAMsim3.
+- `include/newtonsim/NewtonSim.h` exposes functions such as `EncodePIMHeader` for issuing PIM operations.
+- Configuration files are located under `extern/NewtonSim/configs`.
+
+Key Variables
+-------------
+- `dram_channels`, `dram_banks_per_ch`: topology of the memory system.
+- `pim_comp_coverage`: number of PIM computational units per bank.
+- Runtime variables such as `PIMSIM_LOGGING` control debug output in `extern/NewtonSim/src/common.cc`.
+
+Complex Syntax
+--------------
+- PIM commands are encapsulated in `NewtonCmd` structures which store encoded operations.
+- A colour-coded logging system highlights PIM commands (see `extern/NewtonSim/src/common.cc`).
+
+Description
+-----------
+- NewtonSim augments DRAMsim3 to simulate in-memory multiply-accumulate operations.
+- The simulator models command timing (`GWRITE`, `G_ACT#`, `COMP#`, `READRES`) according to parameters in the `.ini` config.
+- NeuPIMs invokes these commands when the system is run in `npu+pim` mode.
+
+Verification Procedure
+----------------------
+1. Compile NewtonSim by running its `brun.sh` or `cmake` instructions in `extern/NewtonSim/README.md`.
+2. Run unit tests or provided examples to confirm PIM commands execute with correct timing.
+3. Compare cycle counts to published DRAMsim3 PIM extensions such as the [Newton architecture paper](https://ieeexplore.ieee.org/document/8356245).
+
+Variable Notes
+--------------
+- `LOGGING_CONFIG::PIMSIM_LOGGING` toggles verbose printing of PIM commands.
+- `LOGGING_CONFIG::TROUBLE_ADDR` and `TROUBLE_CHANNEL` filter debug output to a
+  specific address and channel.
+- Within `NewtonSim`, `response_queues_*` store completed requests separated by
+  request type (read, write, PIM).
+
+Complex Syntax Details
+----------------------
+`NewtonSim::ResponseQueue` implements a ring buffer: `reserve()` increments
+`NumReserved` while `push()` and `pop()` update the underlying vector
+`OutputQueue`.
+

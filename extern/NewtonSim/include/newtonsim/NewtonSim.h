@@ -10,7 +10,9 @@ namespace dramsim3 {
 class Config;
 class BaseDRAMSystem;
 enum class TransactionType;
-// This should be the interface class that deals with CPU
+// Interface between the NeuPIMs CPU model and the underlying
+// PIM-enabled DRAM simulator. Provides queue management and
+// helper functions for encoding PIM commands.
 class NewtonSim {
   public:
     NewtonSim(const std::string &config_file, const std::string &output_dir);
@@ -60,6 +62,8 @@ class NewtonSim {
 };
 class NewtonSim::ResponseQueue {
   public:
+    // Simple ring buffer used to store completed memory
+    // requests until the CPU model consumes them.
     ResponseQueue(int Size);
     bool isAvailable() const;
     bool isAvailable(uint32_t count) const;
@@ -72,6 +76,7 @@ class NewtonSim::ResponseQueue {
   private:
     const uint32_t Size;
     uint32_t NumReserved;
+    // Underlying container for queued responses.
     std::vector<void *> OutputQueue;
 };
 

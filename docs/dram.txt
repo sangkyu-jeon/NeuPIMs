@@ -1,0 +1,69 @@
+DRAM and PIM Backend
+====================
+
+`src/Dram.h` defines an abstract interface for DRAM models. The `PIM` subclass
+extends it with NewtonSim support to execute in-memory computations.
+
+Key Variables
+-------------
+- `_n_ch` : number of memory channels.
+- `_addr_align` : alignment requirement for requests, derived from
+  `SimulationConfig::dram_req_size`.
+- `_total_processed_requests` : per-channel statistics for bandwidth utilisation.
+- `_burst_cycle` : channel burst timing, used to compute average BW.
+
+Functions
+---------
+- `MakeAddress()` converts channel/bank/row/col fields to a physical address.
+- `EncodePIMHeader()` forms special commands that trigger PIM operations.
+- `get_avg_bw_util()` returns the average bandwidth usage observed so far.
+- `get_avg_pim_cycle()` exposes the cycle count spent processing PIM commands.
+
+Verification
+------------
+Compare the statistics printed by `print_stat()` with the values reported by the
+underlying NewtonSim logs. Ensure that `reset_pim_cycle()` zeroes the counters
+between runs.
+
+
+Implementation Details
+---------------------
+The constructor of `PIM` allocates per-channel statistics vectors and
+initialises a `dramsim3::NewtonSim` instance. The DRAM burst length from
+NewtonSim is divided by two to account for double data rate and stored
+in `_burst_cycle`.
+
+Each cycle, `cycle()` calls `ClockTick()` on the NewtonSim instance and
+collects bandwidth statistics at regular intervals. A vector of
+`MemoryIOStat` objects named `_stats` logs bytes read and written per
+channel during these windows.
+
+The function `push()` aligns addresses to a DRAM burst using the
+expression `GetBurstLength() * GetBusBits() / 8`. This ensures every
+memory transaction obeys the configured atomic size. Requests are then
+submitted via `AddTransaction()` with the encoded address and request
+kind.
+
+Complex Syntax Notes
+--------------------
+- The NewtonSim object is stored in a `std::unique_ptr`, allowing the
+  PIM class to manage its lifetime without manual deletion.
+- Address translation uses bitwise arithmetic to combine channel, bank
+group, bank, row, and column fields. `MakeAddress()` delegates this to
+NewtonSim.
+- `std::vector<std::vector<MemoryIOStat>>` creates a two-dimensional
+  container holding per-channel log entries over time.
+
+Statistics and Verification
+---------------------------
+`update_stat()` is called before popping completed transactions. It
+categorises each response by `MemoryAccessType` and increments counters.
+At the end of a stage `log()` writes these stats to files in the
+specified log directory.
+
+To verify DRAM behaviour, compare the average bandwidth from
+`get_avg_bw_util()` with the values printed by NewtonSim's internal logs.
+Reference: the NewtonSim project at
+https://github.com/PSAL-POSTECH/ONNXim provides similar DRAM timing
+validation.
+
